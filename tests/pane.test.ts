@@ -10,10 +10,14 @@ import { CLEAR_MS, gravityMs } from '../hooks/game.ts'
  */
 type ComposerEngine = { prompt: { edit: (e: PromptEditInput) => Promise<PromptEditResult> } }
 
-function typeAtPrompt($: Engine, text: string): Promise<PromptEditResult> {
+type Splice = Pick<PromptEditInput, 'start' | 'end' | 'inputText'>
+
+function editPrompt($: Engine, splice: Splice): Promise<PromptEditResult> {
   const composer = $ as unknown as ComposerEngine
-  return composer.prompt.edit({ origin: { kind: 'composer' }, text: '', cursor: 0, start: 0, end: 0, inputText: text })
+  return composer.prompt.edit({ origin: { kind: 'composer' }, text: '', cursor: 0, ...splice })
 }
+
+const typeAtPrompt = ($: Engine, text: string) => editPrompt($, { start: 0, end: 0, inputText: text })
 
 const SURFACES = ['terminal', 'desktop'] as const
 type Surface = (typeof SURFACES)[number]
@@ -112,6 +116,16 @@ for (const surface of SURFACES) {
       expect(await shows(ui, 'PAUSED')).toBe(false)
       await typeAtPrompt($, 'h')
       expect(await shows(ui, 'PAUSED')).toBe(true)
+    })
+
+    test('keeps playing through a bare cursor move at the prompt', async ($, on) => {
+      mock.store(on)
+      on('prompt.edit', ($, e) => ({ text: e.text, cursor: e.start }))
+      const ui = await mountBoard($, surface)
+      await press(ui, ' ')
+      await press(ui, ' ')
+      await editPrompt($, { start: 0, end: 0, inputText: '' })
+      expect(await shows(ui, 'PAUSED')).toBe(false)
     })
 
     test('pauses itself when no key comes for a while, and any key resumes', async ($, on) => {
