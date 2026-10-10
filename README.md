@@ -40,7 +40,7 @@ Needs a Claude Code with mods (function hooks); built and tested on 2.1.293.
 Keys reach the board once you **click it**; `Esc` hands them back to the prompt.
 
 - **Plays while Claude works.** `/tetris` runs at once, even mid-turn.
-- **Pauses itself** the moment you type at the prompt, or after 20 seconds with no key.
+- **Pauses itself** the moment you type at the prompt (moving the cursor does not count), or after 20 seconds with no key.
 - **Picks up where you left off.** Close the pane, switch sessions, restart Claude Code: the game comes back paused. Your best score is kept too.
 - **Modern rules.** 7-bag randomizer, SRS rotation with wall kicks, hold, ghost piece, lock delay, combos, back-to-back Tetris, levels that speed up every 10 lines.
 - **Grows with the pane.** The biggest board the pane has room for, blocks up to three times the size with a beveled edge; the score beside the well in a wide pane, above it in a tall one; a compact half-block layout when the pane is small. Colors follow your theme.

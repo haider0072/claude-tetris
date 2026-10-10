@@ -1,5 +1,5 @@
 import { atom, read, update } from 'claude-code'
-import type { EngineInterface, JsonValue, Register } from 'claude-code'
+import type { EngineInterface, JsonValue, PromptEditInput, Register } from 'claude-code'
 import { CLIENT_KEY, PANE_ID, isRunning, parseMessage } from './protocol.ts'
 import type { TetrisMessage, TetrisProps } from './protocol.ts'
 
@@ -42,10 +42,11 @@ export const register: Register = on => {
     return <Client key={CLIENT_KEY} module="./client.tsx" props={props} width="100%" />
   })
 
-  // Typing at the prompt means the person has left the board: pause it.
+  // Typing at the prompt means the person has left the board: pause it. A
+  // bare cursor move, such as an arrow key in the prompt, is not typing.
   on('prompt.edit', async ($, e, next) => {
     const box = await next(e)
-    if (isPlaying) {
+    if (isPlaying && changesDraft(e)) {
       isPlaying = false
       await update($, away, count => count + 1)
     }
@@ -90,6 +91,11 @@ async function keep($: EngineInterface, message: TetrisMessage): Promise<void> {
   } catch (error) {
     $.ui.toast(`Tetris could not save progress: ${describe(error)}`)
   }
+}
+
+/** Whether an edit changes the draft (something typed, pasted or deleted) rather than only moving the cursor. */
+function changesDraft(edit: PromptEditInput): boolean {
+  return edit.inputText !== '' || edit.end > edit.start
 }
 
 function isScore(value: unknown): value is number {

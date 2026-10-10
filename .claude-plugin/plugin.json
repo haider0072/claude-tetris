@@ -1,6 +1,6 @@
 {
   "name": "tetris",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Play Tetris in a Claude Code side pane while Claude works. Run /tetris.",
   "author": { "name": "haider0072" },
   "homepage": "https://github.com/haider0072/claude-tetris",
