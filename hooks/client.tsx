@@ -31,9 +31,25 @@ type Surface = ClientSurface<State>
 const TICK_MS = 25
 /** The most game time one tick may cover: a stalled drawing thread slows the game rather than skipping it. */
 const MAX_STEP_MS = 100
-/** A running game with no key for this long pauses itself: the person has looked away. */
-export const IDLE_PAUSE_MS = 6000
-const CONFIRM_KEYS = new Set([' ', 'space', 'return', 'enter'])
+/**
+ * A running game with no key for this long pauses itself: the person has
+ * looked away. Longer than a piece takes to fall the whole well at level 1.
+ */
+export const IDLE_PAUSE_MS = 20_000
+const CONFIRM_KEYS = new Set(['space', 'return'])
+/**
+ * Other names one key can arrive under: the character typed, or a browser's
+ * key name on a surface that hands those on.
+ */
+const KEY_ALIASES: ReadonlyMap<string, string> = new Map([
+  [' ', 'space'],
+  ['spacebar', 'space'],
+  ['enter', 'return'],
+  ['arrowleft', 'left'],
+  ['arrowright', 'right'],
+  ['arrowup', 'up'],
+  ['arrowdown', 'down'],
+])
 
 const PLAY_KEYS: ReadonlyMap<string, (game: Game) => Game> = new Map([
   ['left', game => move(game, -1)],
@@ -50,7 +66,6 @@ const PLAY_KEYS: ReadonlyMap<string, (game: Game) => Game> = new Map([
   ['w', game => rotate(game, 1)],
   ['k', game => rotate(game, 1)],
   ['z', game => rotate(game, -1)],
-  [' ', hardDrop],
   ['space', hardDrop],
   ['c', hold],
   ['p', pause],
@@ -60,7 +75,9 @@ const Tetris: ClientModule<TetrisProps, State> = (props, surface) => {
   const controller = surface.state?.controller ?? mount(props, surface)
   followProps(controller, props, surface)
   const { game, best } = controller
-  return draw({ game, best, columns: props.columns, rows: props.rows }, surface.elements)
+  // The pane's size, or the region's own once laid out when the pane reports none.
+  const columns = props.columns > 0 ? props.columns : surface.columns
+  return draw({ game, best, columns, rows: props.rows }, surface.elements)
 }
 
 export default Tetris
@@ -139,18 +156,22 @@ function messageFor(previous: Game, next: Game): TetrisMessage | null {
 
 function onKey(game: Game, event: ClientKeyEvent): Game {
   if (event.ctrl || event.meta) return game
-  const key = event.key.length === 1 ? event.key.toLowerCase() : event.key
+  const key = keyName(event.key)
   switch (game.phase) {
     case 'ready':
       return CONFIRM_KEYS.has(key) ? start(game) : game
     case 'paused':
-      if (key === 'r') return start(createGame(newSeed()))
-      return CONFIRM_KEYS.has(key) || PLAY_KEYS.has(key) ? resume(game) : game
+      return key === 'r' ? start(createGame(newSeed())) : resume(game)
     case 'over':
       return CONFIRM_KEYS.has(key) || key === 'r' ? start(createGame(newSeed())) : game
     case 'playing':
       return PLAY_KEYS.get(key)?.(game) ?? game
   }
+}
+
+function keyName(key: string): string {
+  const lower = key.toLowerCase()
+  return KEY_ALIASES.get(lower) ?? lower
 }
 
 function newSeed(): number {

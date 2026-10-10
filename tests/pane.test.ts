@@ -27,8 +27,15 @@ const DOCKED = {
   view: {},
 } as const
 const NARROW = { ...DOCKED, bodyColumns: 30, placement: 'inline', scroll: { offset: 0, bodyRows: 14 } } as const
+/** The desktop app's side pane: tall and about 40 cells wide. */
+const TALL = { ...DOCKED, bodyColumns: 40, scroll: { offset: 0, bodyRows: 51 } } as const
+const WIDE = { ...DOCKED, bodyColumns: 70, scroll: { offset: 0, bodyRows: 46 } } as const
+type PaneProps = typeof DOCKED | typeof NARROW | typeof TALL | typeof WIDE
 
-function mountBoard($: Engine, surface: Surface, props: typeof DOCKED | typeof NARROW = DOCKED) {
+/** An empty line of the well at two lines per block: a dot in the middle of every four cells. */
+const BIG_EMPTY_ROW = /^( {2}· ){10}$/
+
+function mountBoard($: Engine, surface: Surface, props: PaneProps = DOCKED) {
   return $.ui.mount({ plugin: 'tetris', surface, component: 'Pane', requestId: 'tetris', props })
 }
 
@@ -107,7 +114,7 @@ for (const surface of SURFACES) {
       expect(await shows(ui, 'PAUSED')).toBe(true)
     })
 
-    test('pauses itself when no key comes for a while, and any game key resumes', async ($, on) => {
+    test('pauses itself when no key comes for a while, and any key resumes', async ($, on) => {
       mock.store(on)
       const ui = await mountBoard($, surface)
       await press(ui, ' ')
@@ -117,8 +124,20 @@ for (const surface of SURFACES) {
       expect(await shows(ui, 'PAUSED')).toBe(false)
       await ui.advance(1000)
       expect(await shows(ui, 'PAUSED')).toBe(true)
-      await press(ui, 'left')
+      await press(ui, 'q')
       expect(await shows(ui, 'PAUSED')).toBe(false)
+    })
+
+    test('takes browser key names as well as the engine ones', async ($, on) => {
+      mock.store(on)
+      const ui = await mountBoard($, surface)
+      await press(ui, 'Enter')
+      expect(await shows(ui, 'SPACE  to start')).toBe(false)
+      const before = JSON.stringify(await ui.drawn({ in: 'board' }))
+      await press(ui, 'ArrowLeft')
+      expect(JSON.stringify(await ui.drawn({ in: 'board' }))).not.toBe(before)
+      await press(ui, 'Spacebar')
+      expect(await panelValue(ui, 'SCORE')).not.toBe('0')
     })
 
     test('a game that beats the best shows NEW BEST', async ($, on) => {
@@ -158,6 +177,23 @@ for (const surface of SURFACES) {
       const next = await mountBoard($, surface)
       expect(await shows(next, 'SPACE  to start')).toBe(true)
       expect(await panelValue(next, 'BEST')).toBe(score)
+    })
+
+    test('a tall pane draws big blocks with the score above the well', async ($, on) => {
+      mock.store(on)
+      const ui = await mountBoard($, surface, TALL)
+      expect(await shows(ui, BIG_EMPTY_ROW)).toBe(true)
+      expect(await shows(ui, /^SCORE 0/)).toBe(true)
+      expect(await shows(ui, /c hold {3}p pause {3}r restart/)).toBe(true)
+      await press(ui, ' ')
+      expect(await shows(ui, BIG_EMPTY_ROW)).toBe(true)
+    })
+
+    test('a wide pane draws big blocks with the panel beside the well', async ($, on) => {
+      mock.store(on)
+      const ui = await mountBoard($, surface, WIDE)
+      expect(await shows(ui, BIG_EMPTY_ROW)).toBe(true)
+      expect(await panelValue(ui, 'LEVEL')).toBe('1')
     })
 
     test('a narrow pane draws the compact board', async ($, on) => {

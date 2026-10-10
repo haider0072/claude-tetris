@@ -5,7 +5,7 @@ import type { TetrisMessage, TetrisProps } from './protocol.ts'
 
 const SAVE_KEY = 'game'
 const BEST_KEY = 'best'
-/** Room for the wide layout: a 22-column well, a gap and an 18-column panel; 22 rows plus the frame. */
+/** Room for the docked layout: a framed 22-column well, a gap and an 18-column panel; 22 rows plus the frame. */
 const PANE = { id: PANE_ID, title: 'Tetris', columns: 44, rows: 24 } as const
 const away = atom({ plugin: 'tetris', key: 'away' } as const, 0)
 
@@ -39,7 +39,7 @@ export const register: Register = on => {
       columns: e.props.bodyColumns,
       rows: e.props.scroll.bodyRows,
     }
-    return <Client key={CLIENT_KEY} module="./client.tsx" props={props} />
+    return <Client key={CLIENT_KEY} module="./client.tsx" props={props} width="100%" />
   })
 
   // Typing at the prompt means the person has left the board: pause it.
