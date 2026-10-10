@@ -1,0 +1,11 @@
+{
+  "name": "tetris",
+  "version": "1.0.0",
+  "description": "Play Tetris in a Claude Code side pane while Claude works. Run /tetris.",
+  "author": { "name": "haider0072" },
+  "homepage": "https://github.com/haider0072/claude-tetris",
+  "repository": "https://github.com/haider0072/claude-tetris",
+  "license": "MIT",
+  "keywords": ["tetris", "game", "mod", "pane"],
+  "types": "./types/index.d.ts"
+}

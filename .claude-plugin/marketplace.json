@@ -1,0 +1,12 @@
+{
+  "name": "claude-tetris",
+  "owner": { "name": "haider0072" },
+  "description": "Tetris for Claude Code: a side-pane game mod.",
+  "plugins": [
+    {
+      "name": "tetris",
+      "source": "./",
+      "description": "Play Tetris in a Claude Code side pane while Claude works. Run /tetris."
+    }
+  ]
+}
